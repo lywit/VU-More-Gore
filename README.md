@@ -20,4 +20,4 @@ In there, you can change
 
 ![alt text](https://i.imgur.com/vbMPWvA.png)
 ![alt text](https://i.imgur.com/H6p4RxC.png)
-![alt text](upload://24dAc7O0hOwKNordoV5GQSMMK9a.jpeg)
+![alt text](https://i.imgur.com/rNTLsF7.png)
