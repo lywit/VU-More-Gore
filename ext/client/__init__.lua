@@ -50,8 +50,8 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('611A7D99-A4F8-4602-BC40-A5D958
 	local SpawnSize = SpawnSizeData(instance)
 
 	SpawnSize:MakeWritable()
-	decalData.size = decalData.size * bloodPoolSizeMultiplier
-	decalData.randomSize = bloodPoolSizeRandomness
+	SpawnSize.size = SpawnSize.size * bloodPoolSizeMultiplier
+	SpawnSize.randomSize = bloodPoolSizeRandomness
 end)
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/FX/Impacts/Soldier/Emitter_S/Em_Impact_Soldier_Body_Blood_Chunks_01_S.txt#L36 
