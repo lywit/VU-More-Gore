@@ -3,7 +3,7 @@ Adds more blood & gore for Battlefield 3 Venice Unleashed.
 It achieves this by changing the behaviour of blood splatter effects and scaling up blood pool decals.
 
 # Download:
-https://github.com/lywit/VU-More-Gore
+https://github.com/lywit/VU-More-Gore/releases
 
 # Configuration
 If you'd like to change the amount of blood, this mod is completely configurable.
