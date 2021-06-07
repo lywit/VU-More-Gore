@@ -1,6 +1,17 @@
 --Corpses
 local corpseDecayTime = 120 --The time in seconds it takes for a player's body to despawn | Default = 15 | Note: Keep in mind that a server will crash if over 512 bodies are on the ground
+
+--Vehicles
 local vehicleCorpseDecayTime = 300.0 --The time in seconds it takes for vehicle wrecks to despawn | Default = 60
+
+--Debris
+local debrisDecayTime = 300 --The time it takes for debris to decay, this effects every type of debris in the game
+local debrisMaxCount = 512 --The maximum debris per part.
+local debrisIsClientSide = false --This will make it so every debris part has it's physics calulated on the client instead of some parts being calulated on the server.
+								 --With these physics being made client sided, it could be that other players won't see the debris in the exact same place or see floating debris. You can consider enabling this to increase server fps at the cost of consistency.
+local killPartsOnCollision = false --This prevents debris from being despawned when it falls on the ground
+local deactiveOnSleep = true --This is an optimization that disables the debris physics after the debris has been sitting still on the ground for some time
+
 
 Events:Subscribe('Partition:Loaded', function(partition)
 
@@ -16,6 +27,26 @@ Events:Subscribe('Partition:Loaded', function(partition)
 				bangerData:MakeWritable()
 				bangerData.timeToLive = vehicleCorpseDecayTime
 			end
+		elseif(instance:Is('DebrisClusterData')) then
+			local debrisData = DebrisClusterData(instance)
+			debrisData:MakeWritable()
+
+			debrisData.clusterLifetime = debrisDecayTime
+			debrisData.maxActivePartsCount = debrisMaxCount
+
+			--These if statements are done this way to allow the values to be restored to the vanilla ones
+			if(debrisIsClientSide == true) then
+				debrisData.clientSideOnly = true
+			end
+			
+			if(killPartsOnCollision == false) then
+				debrisData.killPartsOnCollision = false
+			end
+
+			if(deactiveOnSleep == true) then
+				debrisData.deactivatePartsOnSleep = true
+			end
+
 		end
 	end
 end)
