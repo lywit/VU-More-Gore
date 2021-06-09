@@ -15,7 +15,7 @@ end
 
 function CheckVersion()
 
-    if Server:GetCurrentVersion() ~= localModVersion then
+    if GetCurrentVersion() ~= localModVersion then
 
         print("Version: " .. localModVersion)
         print("This mod seems to be out of date! Please visit https://github.com/lywit/VU-More-Gore");

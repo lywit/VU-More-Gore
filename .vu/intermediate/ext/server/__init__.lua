@@ -1,7 +1,7 @@
 --[[
     Venice Unleashed - Intermediate Lua binding
     Type: ext\server\__init__.lua
-    Generated on: Wed Jun 09 2021 11:46:08 GMT+0200 (Central European Summer Time)
+    Generated on: Wed Jun 09 2021 11:50:04 GMT+0200 (Central European Summer Time)
 --]]
 
 ---@meta
