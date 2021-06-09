@@ -1,5 +1,5 @@
 --Blood Pool
-local bloodPoolSizeMultiplier = 4.0 --Size of the blood pool effect on dead bodies
+local bloodPoolSizeMultiplier = 3.25 --Size of the blood pool effect on dead bodies
 local bloodPoolSizeRandomness = 0.75 --The randomness that will be added to the blood pool effect's size
 
 --Blood Splattter
