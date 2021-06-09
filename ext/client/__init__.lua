@@ -4,9 +4,9 @@ local bloodPoolSizeRandomness = 0.75 --The randomness that will be added to the 
 
 --Blood Splattter
 local maxBloodSplatterAmount = 128  --The maximum amount of blood effects that can be spawned
-local bloodSplatterLifetimeMultiplier = 2.55 --How long new blood splatters should be spawned
-local bloodSplatterSpawnRateMultiplier = 8.75 --How fast new blood splatters should be spawned
-local bloodSplatterSizeMultiplier = 5.75 --The spawn area size for blood splatters
+local bloodSplatterLifetimeMultiplier = 2.35 --How long new blood splatters should be spawned
+local bloodSplatterSpawnRateMultiplier = 3.75 --How fast new blood splatters should be spawned
+local bloodSplatterSizeMultiplier = 3.25 --The spawn area size for blood splatters
 local bloodSplatterEffectDistanceMultiplier = 5.0 --The distance where blood splatters will be rendered
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/Decals/Blood/Decal_Blood_01.txt#L2
