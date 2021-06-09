@@ -1,3 +1,6 @@
+--Credit to Ensio for his version checking code!
+require('__shared/version')
+
 function GetCurrentVersion()
     -- Version Check Code Credit: https://gitlab.com/n4gi0s/vu-mapvote by N4gi0s
     options = HttpOptions({}, 10)
@@ -18,13 +21,13 @@ function CheckVersion()
     if GetCurrentVersion() ~= localModVersion then
 
         print("Version: " .. localModVersion)
-        print("This mod seems to be out of date! Please visit https://github.com/lywit/VU-More-Gore");
+        print("More Gore is out of date! Download the latest version here: https://github.com/lywit/VU-More-Gore");
         print('Latest version: ' .. json.Version)
 
     else
 
         print("Version: " .. localModVersion)
-        print("You're running the lastest version!")
+        
 
     end
 

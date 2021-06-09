@@ -1,0 +1,1 @@
+localModVersion = "1.1.2"; --temp fix, waiting for api to get version from mod.json
