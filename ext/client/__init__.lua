@@ -1,11 +1,12 @@
 --Blood Pool
-local bloodPoolSizeMultiplier = 3.5 --Size of the blood pool effect on dead bodies
-local bloodPoolSizeRandomness = 0.5 --The randomness that will be added to the blood pool effect's size
+local bloodPoolSizeMultiplier = 4.0 --Size of the blood pool effect on dead bodies
+local bloodPoolSizeRandomness = 0.75 --The randomness that will be added to the blood pool effect's size
 
 --Blood Splattter
-local bloodSplatterLifetimeMultiplier = 2.15 --How long new blood splatters should be spawned
-local bloodSplatterSpawnRateMultiplier = 3.85 --How fast new blood splatters should be spawned
-local bloodSplatterSizeMultiplier = 4.25 --The spawn area size for blood splatters
+local maxBloodSplatterAmount = 128  --The maximum amount of blood effects that can be spawned
+local bloodSplatterLifetimeMultiplier = 2.55 --How long new blood splatters should be spawned
+local bloodSplatterSpawnRateMultiplier = 8.75 --How fast new blood splatters should be spawned
+local bloodSplatterSizeMultiplier = 5.75 --The spawn area size for blood splatters
 local bloodSplatterEffectDistanceMultiplier = 5.0 --The distance where blood splatters will be rendered
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/Decals/Blood/Decal_Blood_01.txt#L2
@@ -32,7 +33,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('611A7D99-A4F8-4602-BC40-A5D958
 
 	EmitterData:MakeWritable()
 	EmitterData.lifetime = EmitterData.lifetime * bloodSplatterLifetimeMultiplier
-	--EmitterData.maxCount = 9999
+	EmitterData.maxCount = maxBloodSplatterAmount
 	EmitterData.visibleAfterDistance = EmitterData.visibleAfterDistance * bloodSplatterEffectDistanceMultiplier
 	EmitterData.maxSpawnDistance = EmitterData.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
@@ -59,7 +60,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('68D37A4B-1A02-4FBC-BB22-DEF26D
 
 	EmitterData:MakeWritable()
 	EmitterData.lifetime = EmitterData.lifetime * bloodSplatterLifetimeMultiplier
-	--EmitterData.maxCount = 9999
+	EmitterData.maxCount = maxBloodSplatterAmount
 	EmitterData.visibleAfterDistance = EmitterData.visibleAfterDistance * bloodSplatterEffectDistanceMultiplier
 	EmitterData.maxSpawnDistance = EmitterData.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
