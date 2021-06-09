@@ -5,10 +5,10 @@ local corpseDecayTime = 60 --The time in seconds it takes for a player's body to
 local vehicleCorpseDecayTime = 300.0 --The time in seconds it takes for vehicle wrecks to despawn | Default = 60
 
 --Debris
-local debrisDecayTime = 120 --The time it takes for debris to decay, this effects every type of debris in the game
+local debrisDecayTime = 128 --The time it takes for debris to decay, this effects every type of debris in the game
 local debrisMaxCount = 256 --The maximum debris per part.
-local debrisIsClientSide = false --This will make it so every debris part has it's physics calulated on the client instead of some parts being calulated on the server.
-								--With these physics being made client sided, it could be that other players won't see the debris in the exact same place or see floating debris. You can consider enabling this to increase server fps at the cost of consistency.
+local debrisIsClientSide = true --This will make it so every debris part has it's physics calulated on the client instead of some parts being calulated on the server.
+								 --With these physics being made client sided, it could be that other players won't see the debris in the exact same place or see floating debris. You can consider enabling this to increase server fps at the cost of consistency.
 local killPartsOnCollision = false --This prevents debris from being despawned when it falls on the ground
 local deactiveOnSleep = true --This is an optimization that disables the debris physics after the debris has been sitting still on the ground for some time
 
