@@ -1,1 +1,1 @@
-localModVersion = "1.1.2"; --temp fix, waiting for api to get version from mod.json
+localModVersion = "1.1.3"; --temp fix, waiting for api to get version from mod.json
