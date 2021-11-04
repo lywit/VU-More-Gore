@@ -9,7 +9,7 @@ https://github.com/lywit/VU-More-Gore/releases
 If you'd like to change the amount of blood, this mod is completely configurable.
 You can configure the mod by going into:
 ```
-Server\Admin\Mods\VU-More-Gore\ext\client\__init__.lua
+Server\Admin\Mods\VU-More-Gore\ext\shared\config.lua
 ```
 In there, you can change 
 * Size of the blood pool effect on dead bodies
@@ -17,6 +17,9 @@ In there, you can change
 * How fast new blood splatters should be spawned
 * The spawn area size for blood splatters
 * The distance where blood splatters will be rendered
+* How long bodies stay on the ground
+* How long vehicle wrecks stay on the ground
+* How long debris should stay on the ground for
 
 ![alt text](https://i.imgur.com/vbMPWvA.png)
 ![alt text](https://i.imgur.com/H6p4RxC.png)
