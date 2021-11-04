@@ -20,27 +20,27 @@ Events:Subscribe('Partition:Loaded', function(partition)
 			end
 		end
 
-	if enableDebrisModifications and instance:Is('DebrisClusterData') then
-		local debrisData = DebrisClusterData(instance)
-		debrisData:MakeWritable()
+		if enableDebrisModifications and instance:Is('DebrisClusterData') then
+			instance = DebrisClusterData(instance)
+			instance:MakeWritable()
 
-		debrisData.clusterLifetime = debrisDecayTime
-		debrisData.maxActivePartsCount = debrisMaxCount
+			instance.clusterLifetime = debrisDecayTime
+			instance.maxActivePartsCount = debrisMaxCount
 
-		--These if statements are done this way to allow the values to be restored to the vanilla ones
-		if(debrisIsClientSide == true) then
-			debrisData.clientSideOnly = true
+			--These if statements are done this way to allow the values to be restored to the vanilla ones
+			if(debrisIsClientSide == true) then
+				instance.clientSideOnly = true
+			end
+
+			if(killPartsOnCollision == false) then
+				instance.killPartsOnCollision = false
+			end
+
+			if(deactiveOnSleep == true) then
+				instance.deactivatePartsOnSleep = true
+			end
+
 		end
-
-		if(killPartsOnCollision == false) then
-			debrisData.killPartsOnCollision = false
-		end
-
-		if(deactiveOnSleep == true) then
-			debrisData.deactivatePartsOnSleep = true
-		end
-
-	end
 		
 	end
 end)
