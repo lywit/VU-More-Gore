@@ -20,6 +20,14 @@ Events:Subscribe('Partition:Loaded', function(partition)
 			end
 		end
 
+		if enableTreeModifications then
+			if instance:Is('VegetationTreeEntityData') then
+				instance = VegetationTreeEntityData(instance)
+				instance:MakeWritable()
+				instance.partsTimeToLive = treeCorpseTime
+			end
+		end
+		
 		if enableDebrisModifications and instance:Is('DebrisClusterData') then
 			instance = DebrisClusterData(instance)
 			instance:MakeWritable()

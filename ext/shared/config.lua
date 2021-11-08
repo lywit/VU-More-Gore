@@ -7,7 +7,7 @@ maxBloodSplatterAmount = 128  --The maximum amount of blood effects that can be 
 bloodSplatterLifetimeMultiplier = 2.25 --How long new blood splatters should be spawned
 bloodSplatterSpawnRateMultiplier = 3.75 --How fast new blood splatters should be spawned
 bloodSplatterSizeMultiplier = 1.25 --The spawn area size for blood splatters
-bloodSplatterEffectDistanceMultiplier = 5.0 --The distance where blood splatters will be rendered
+bloodSplatterEffectDistanceMultiplier = 1.5 --The distance where blood splatters will be rendered
 
 --Corpses
 corpseDecayTime = 45 --The time in seconds it takes for a player's body to despawn | Default = 15 | Note: Keep in mind that a server will crash if over 512 bodies are on the ground at once
@@ -16,6 +16,10 @@ corpseDecayTime = 45 --The time in seconds it takes for a player's body to despa
 enableVehicleModifications = false --enable or disable vehicle modifications
 vehicleCorpseDecayTime = 900.0 --The time in seconds it takes for vehicle wrecks to despawn | Default = 60
 vehicleWreckHealthMultiplier = 3 --Multiplies the health of vehicle wrecks
+
+--Trees
+enableTreeModifications = false
+treeCorpseTime = 1800 -- The time before destroyed trees despawn | Default = 30
 
 --Debris
 enableDebrisModifications = false --enable or disable debris modifications
