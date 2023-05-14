@@ -10,7 +10,7 @@ bloodSplatterSizeMultiplier = 1.25 --The spawn area size for blood splatters
 bloodSplatterEffectDistanceMultiplier = 1.5 --The distance where blood splatters will be rendered
 
 --Corpses
---Note that for Fun-Bots to be effected you need to set AdditionalBotSpawnDelay in the Config to the desired corpse time for bots. Otherwise their corpses will disspear in 0.5 seconds by default.
+--Note that for Fun-Bots to be effected you need to set AdditionalBotSpawnDelay in the Config to the desired corpse time for bots. Otherwise their corpses will disappear in 0.5 seconds by Fun-Bots default.
 corpseDecayTime = 45 --The time in seconds it takes for a player's body to despawn | Default = 15 | Note: Keep in mind that a server will crash if over 512 bodies are on the ground at once
 
 --Dismemberment
@@ -19,6 +19,7 @@ headMultiplier = 1.25
 armMultiplier = 1.5 --Note that arms can be difficult to hit
 legMultiplier = 1.5 --Note that leg hitboxes are difficult to hit (You have to shoot at the feet)
 --Settings
+enableDismemberment = true --Set to false to disable dismembered
 dismemberArmsBeforeDeath = false --Arms can be dismembered before death, intended for zombie servers. Otherwise bots will hold floating guns.
 
 --Vehicles

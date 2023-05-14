@@ -4,9 +4,7 @@ require('__shared/version')
 local bloodEffect = nil
 
 Hooks:Install('Soldier:Damage', 1, function(hook, soldier, info, giverInfo)
-    if soldier == nil then
-        return
-    elseif soldier.player == nil then
+    if soldier == nil or soldier.player == nil or enableDismemberment == false then
         return
     elseif giverInfo.giver ~= nil and giverInfo.giver.teamId == soldier.player.teamId then --prevent friendly fire from causing dismemberment
         return
@@ -15,7 +13,7 @@ Hooks:Install('Soldier:Damage', 1, function(hook, soldier, info, giverInfo)
     local boneIndex = info.boneIndex
 
     if info.isBulletDamage == true then
-        if(((info.damage > soldier.health and DoesEnoughDamageToDismember(info.damage, boneIndex, soldier.maxHealth)) or ((boneIndex == 2 or boneIndex == 3) and DoesEnoughDamageToDismember(info.damage, boneIndex, soldier.maxHealth) and dismemberArmsBeforeDeath == true)) and soldier.player.onlineId == 0) then
+        if(((info.damage > soldier.health and DoesEnoughDamageToDismember(info.damage, boneIndex, soldier.maxHealth)) or ((boneIndex == 2 or boneIndex == 3) and DoesEnoughDamageToDismember(info.damage, boneIndex, soldier.maxHealth) and dismemberArmsBeforeDeath == true))) then
             NetEvents:Broadcast('DismembermentEvent', tostring(soldier.player.name) .. ',' .. boneIndex .. ',' .. info.position.x  .. ',' .. info.position.y .. ',' .. info.position.z)
         end
     elseif (info.isExplosiveDamage == true or info.isDemolitionDamage) and info.damage > soldier.health then
