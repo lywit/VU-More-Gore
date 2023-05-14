@@ -2,7 +2,7 @@
   "Name": "MoreGore",
   "Authors": ["PowerChopper aka Lesley"],
   "Description": "Adds more blood, gore and dismemberment.",
-  "Version": "1.2.0b",
+  "Version": "1.2.0",
   "HasVeniceEXT": true,
   "HasWebUI": false,
   "Tags": ["more-gore"],
