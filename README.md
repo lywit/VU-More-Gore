@@ -4,7 +4,8 @@ It achieves this by changing the behaviour of blood splatter effects and scaling
 
 # Download:
 https://github.com/lywit/VU-More-Gore/releases
-
+# Important
+For Fun-Bots to be effected you need to set AdditionalBotSpawnDelay in the Config to the desired corpse time for bots. Otherwise their corpses will disappear in 0.5 seconds by Fun-Bots default.
 # Configuration
 If you'd like to change the amount of blood or dismemberment, this mod is completely configurable.
 You can configure the mod by going into:
