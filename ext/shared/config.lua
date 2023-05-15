@@ -1,13 +1,16 @@
+--Blood
+bloodOnEveryHit = true --Spawns networked blood effects on every bullet based on damage
+
 --Blood Pool
 bloodPoolSizeMultiplier = 2.25 --Size of the blood pool effect on dead bodies
 bloodPoolSizeRandomness = 0.75 --The randomness that will be added to the blood pool effect's size
 
 --Blood Splattter
 maxBloodSplatterAmount = 128  --The maximum amount of blood effects that can be spawned
-bloodSplatterLifetimeMultiplier = 2.25 --How long new blood splatters should be spawned
-bloodSplatterSpawnRateMultiplier = 3.75 --How fast new blood splatters should be spawned
-bloodSplatterSizeMultiplier = 1.25 --The spawn area size for blood splatters
-bloodSplatterEffectDistanceMultiplier = 1.5 --The distance where blood splatters will be rendered
+bloodSplatterLifetimeMultiplier = 1.25 --How long new blood splatters should be spawned
+bloodSplatterSpawnRateMultiplier = 1.25 --How fast new blood splatters should be spawned
+bloodSplatterSizeMultiplier = 1.0 --The spawn area size for blood splatters
+bloodSplatterEffectDistanceMultiplier = 1.25 --The distance where blood splatters will be rendered
 
 --Corpses
 --Note that for Fun-Bots to be effected you need to set AdditionalBotSpawnDelay in the Config to the desired corpse time for bots. Otherwise their corpses will disappear in 0.5 seconds by Fun-Bots default.
@@ -16,8 +19,8 @@ corpseDecayTime = 45 --The time in seconds it takes for a player's body to despa
 --Dismemberment
 --Multipliers | Higher values make it easier to dismember a body part.
 headMultiplier = 1.25
-armMultiplier = 1.5 --Note that arms can be difficult to hit
-legMultiplier = 1.5 --Note that leg hitboxes are difficult to hit (You have to shoot at the feet)
+armMultiplier = 1.75 --Note that arms can be difficult to hit
+legMultiplier = 1.75 --Note that leg hitboxes are difficult to hit (You have to shoot at the feet)
 --Settings
 enableDismemberment = true --Set to false to disable dismembered
 dismemberArmsBeforeDeath = false --Arms can be dismembered before death, intended for zombie servers. Otherwise bots will hold floating guns.

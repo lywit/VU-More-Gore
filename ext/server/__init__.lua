@@ -1,8 +1,6 @@
 --Credit to Ensio for his version checking code!
 require('__shared/version')
 
-local bloodEffect = nil
-
 Hooks:Install('Soldier:Damage', 1, function(hook, soldier, info, giverInfo)
     if soldier == nil or soldier.player == nil or enableDismemberment == false then
         return
@@ -14,15 +12,16 @@ Hooks:Install('Soldier:Damage', 1, function(hook, soldier, info, giverInfo)
 
     if info.isBulletDamage == true then
         if(((info.damage > soldier.health and DoesEnoughDamageToDismember(info.damage, boneIndex, soldier.maxHealth)) or ((boneIndex == 2 or boneIndex == 3) and DoesEnoughDamageToDismember(info.damage, boneIndex, soldier.maxHealth) and dismemberArmsBeforeDeath == true))) then
-            NetEvents:Broadcast('DismembermentEvent', tostring(soldier.player.name) .. ',' .. boneIndex .. ',' .. info.position.x  .. ',' .. info.position.y .. ',' .. info.position.z)
+            NetEvents:Broadcast('DismembermentEvent', tostring(soldier.player.name) .. ',' .. boneIndex .. ',' .. info.position.x  .. ',' .. info.position.y .. ',' .. info.position.z .. ',' .. info.damage)
+        elseif bloodOnEveryHit then
+            NetEvents:Broadcast('BloodEffectEvent', info.position.x  .. ',' .. info.position.y .. ',' .. info.position.z .. ',' .. info.damage .. ',' .. boneIndex)
         end
     elseif (info.isExplosiveDamage == true or info.isDemolitionDamage) and info.damage > soldier.health then
         for i = 1, MathUtils:GetRandomInt(1, 3), 1 do
             boneIndex = MathUtils:GetRandomInt(2, 5)
-            NetEvents:Broadcast('DismembermentEvent', tostring(soldier.player.name) .. ',' .. boneIndex)
+            NetEvents:Broadcast('DismembermentEvent', tostring(soldier.player.name) .. ',' .. boneIndex .. ',' .. info.position.x  .. ',' .. info.position.y .. ',' .. info.position.z .. ',' .. info.damage)
         end
     end
-
 end)
 
 Events:Subscribe('Player:Respawn', function(player)
