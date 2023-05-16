@@ -24,6 +24,7 @@ legMultiplier = 1.75 --Note that leg hitboxes are difficult to hit (You have to 
 --Settings
 enableDismemberment = true --Set to false to disable dismembered
 dismemberArmsBeforeDeath = false --Arms can be dismembered before death, intended for zombie servers. Otherwise bots will hold floating guns.
+dismerbermentBloodSquirtDegredationFactor = 1.125 --How quickly the blood squirt frequency degrades. Higher values cause blood squirts to dissapear sooner.
 
 --Vehicles
 enableVehicleModifications = true --enable or disable vehicle modifications

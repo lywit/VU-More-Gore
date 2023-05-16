@@ -1,8 +1,12 @@
 require '__shared/config'
 
+
 local DismemberedPlayers = {}
 local DismemberedPlayerBones = {}
+local DismemberedPlayerBonesSquirtChance = {}
 local bloodEffect = nil
+local bloodSquirtUpdateCount = 0
+
 
 NetEvents:Subscribe('DismembermentEvent', function(data)
 	data = split_with_comma(data)
@@ -18,9 +22,12 @@ NetEvents:Subscribe('DismembermentEvent', function(data)
 
 		table.insert(DismemberedPlayers, data[1])
 		table.insert(DismemberedPlayerBones, data[2])
+		table.insert(DismemberedPlayerBonesSquirtChance, 0.01)
 
 		if bloodEffect ~= nil and data[3] ~= nil and data[4] ~= nil and data[5] ~= nil then
-			SpawnBloodEffect(Vec3(tonumber(data[3]), tonumber(data[4]), tonumber(data[5])), data[6], data[2] == 45)
+			local lTransform = LinearTransform()
+			lTransform.trans = Vec3(tonumber(data[3]), tonumber(data[4]), tonumber(data[5]))
+			SpawnBloodEffect(lTransform, data[6], data[2] == 45)
 		end
 	end
 end)
@@ -28,7 +35,9 @@ end)
 NetEvents:Subscribe('BloodEffectEvent', function(data)
 	data = split_with_comma(data)
 	if bloodEffect ~= nil and data[1] ~= nil and data[2] ~= nil and data[3] ~= nil and data[4] ~= nil then
-		SpawnBloodEffect(Vec3(tonumber(data[1]), tonumber(data[2]), tonumber(data[3])), data[4], data[5] == 1)
+		local lTransform = LinearTransform()
+		lTransform.trans = Vec3(tonumber(data[1]), tonumber(data[2]), tonumber(data[3]))
+		SpawnBloodEffect(lTransform, data[4], data[5] == 1)
 	end
 end)
 
@@ -70,6 +79,15 @@ function UpdateDismemberment()
 					if dismembermentQuatTransform ~= nil then
 						dismembermentQuatTransform.transAndScale.w = 0.0
 						player.corpse.ragdollComponent:SetLocalTransform(tonumber(DismemberedPlayerBones[i]), dismembermentQuatTransform)
+						local worldQuatTransform = player.corpse.ragdollComponent:GetActiveWorldTransform(tonumber(DismemberedPlayerBones[i])):ToLinearTransform()
+						--local bloodEffectPosition = Vec3(worldQuatTransform.transAndScale.x, worldQuatTransform.transAndScale.y, worldQuatTransform.transAndScale.z)
+						if bloodSquirtUpdateCount > 5 and MathUtils:GetRandom(0, DismemberedPlayerBonesSquirtChance[i]) < 1 then
+							SpawnBloodEffect(worldQuatTransform, -98, false)
+							DismemberedPlayerBonesSquirtChance[i] = DismemberedPlayerBonesSquirtChance[i] * dismerbermentBloodSquirtDegredationFactor
+							bloodSquirtUpdateCount = 0
+						else
+							bloodSquirtUpdateCount = bloodSquirtUpdateCount + 1
+						end
 					end
 				end
 			elseif player.soldier then
@@ -77,25 +95,38 @@ function UpdateDismemberment()
 				if dismembermentQuatTransform ~= nil then
 					dismembermentQuatTransform.transAndScale.w = 0.0
 					player.soldier.ragdollComponent:SetLocalTransform(tonumber(DismemberedPlayerBones[i]), dismembermentQuatTransform)
+					local worldQuatTransform = player.soldier.ragdollComponent:GetActiveWorldTransform(tonumber(DismemberedPlayerBones[i])):ToLinearTransform()
+					--local bloodEffectPosition = Vec3(worldQuatTransform.transAndScale.x, worldQuatTransform.transAndScale.y, worldQuatTransform.transAndScale.z)
+					if bloodSquirtUpdateCount > 5 and MathUtils:GetRandom(0, 1) then
+						SpawnBloodEffect(worldQuatTransform, -98, false)
+						bloodSquirtUpdateCount = 0
+					else
+						bloodSquirtUpdateCount = bloodSquirtUpdateCount + 1
+					end
 				end
 			end
 		end
 	end
 end
 
-function SpawnBloodEffect(position, damage, isHeadshot)
+function SpawnBloodEffect(position, damage, isHeadshot, sizeOverwrite)
 	if bloodEffect ~= nil and position ~= nil then
 		local effectPosition = LinearTransform()
-
+		local effectSize = 0
 		if isHeadshot then
 			damage = damage / 2.4
 		end
 
-		local effectSize =  1.0 + (damage / 100)
-		effectPosition.left = Vec3(effectSize, 0, 0)
-		effectPosition.up = Vec3(0, effectSize, 0)
-		effectPosition.forward = Vec3(0, 0, effectSize)
-		effectPosition.trans = position
+		if sizeOverwrite == nil then
+			effectSize =  (1.0 + (damage / 100)) * MathUtils:GetRandom(0.75, 1.25)
+		else
+			effectSize = sizeOverwrite
+		end
+
+		effectPosition.left = Vec3(effectSize, position.left.y, position.left.z)
+		effectPosition.up = Vec3(position.up.x, effectSize, position.up.z)
+		effectPosition.forward = Vec3(position.forward.x, position.forward.y, effectSize)
+		effectPosition.trans = position.trans
 
 		EffectManager:PlayEffect(bloodEffect, effectPosition, EffectParams(), false)
 	end
@@ -106,6 +137,7 @@ function RemoveDismemberedPlayer(player)
 	while i ~= nil do
 		table.remove(DismemberedPlayers, i)
 		table.remove(DismemberedPlayerBones, i)
+		table.remove(DismemberedPlayerBonesSquirtChance, i)
 		i = indexOf(DismemberedPlayers, player)
 	end
 end
@@ -180,7 +212,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('611A7D99-A4F8-4602-BC40-A5D958
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/FX/Impacts/Soldier/Emitter_S/Em_Impact_Soldier_Body_Blood_01_S.txt#L8
@@ -191,7 +222,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/FX/Impacts/Soldier/Emitter_S/Em_Impact_Soldier_Body_Blood_01_S.txt#L199
@@ -216,7 +246,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('68D37A4B-1A02-4FBC-BB22-DEF26D
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('68D37A4B-1A02-4FBC-BB22-DEF26D6CF8A0'), Guid('B9E8F591-9394-4605-B0BC-7EA331556F51'), function(instance)
@@ -241,7 +270,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('91CFF1D3-46E0-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('91CFF1D3-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('0EE3D168-5B41-4BA0-A318-C30ED5CE06CD'), function(instance)
@@ -266,7 +294,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('F080EB5F-BC10-47FC-BD95-2499A5
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('F080EB5F-BC10-47FC-BD95-2499A52B5ACE'), Guid('BDABBD04-59E3-4552-9C97-5107C1DBCE3B'), function(instance)
@@ -291,7 +318,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9B1F187'), Guid('AF71CE59-9DA1-4F54-BA65-38FBDC92CAFC'), function(instance)
@@ -316,7 +342,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('04A6AAC6-46E7-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('04A6AAC6-46E7-11DE-9F79-8FE6EED9BBEA'), Guid('FE2E91E6-6F21-4352-A679-D3D005AD75C7'), function(instance)
@@ -341,7 +366,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('8096D617-FECC-478D-AAED-31949B
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('8096D617-FECC-478D-AAED-31949BFD790F'), Guid('CB66C431-2994-4124-8965-CB21E86063CE'), function(instance)
@@ -366,7 +390,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('0D39B5F6-46E7-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('0D39B5F6-46E7-11DE-9F79-8FE6EED9BBEA'), Guid('E13AD8D4-72A1-4413-824B-3060BF523609'), function(instance)
@@ -391,7 +414,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('DA1EF1C7-B797-41F5-8622-030362
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('DA1EF1C7-B797-41F5-8622-03036202F94C'), Guid('EFD0D486-B848-4B9C-9CEF-33D53C13AD17'), function(instance)
@@ -416,7 +438,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('FF3D43E3-CFBA-4D4A-B313-74194B
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.maxSpawnDistance = instance.maxSpawnDistance * bloodSplatterEffectDistanceMultiplier
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('FF3D43E3-CFBA-4D4A-B313-74194B1AE894'), Guid('40F00F8A-3760-40B2-8617-BA84328C7AAF'), function(instance)
