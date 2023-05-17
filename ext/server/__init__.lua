@@ -26,22 +26,21 @@ end)
 
 Events:Subscribe('Player:Respawn', function(player)
     if player ~= nil then
-        NetEvents:Broadcast('RemoveDismemberment', tostring(player.name))
+        NetEvents:Broadcast('RemoveDismemberment', tostring(player.id))
     end
 end)
 
 Events:Subscribe('Player:ReviveAccepted', function(player)
     if player ~= nil then
-        NetEvents:Broadcast('RemoveDismemberment', tostring(player.name))
+        NetEvents:Broadcast('RemoveDismemberment', tostring(player.id))
     end
 end)
 
 Events:Subscribe('Player:Left', function(player)
     if player ~= nil then
-        NetEvents:Broadcast('RemoveDismemberment', tostring(player.name))
+        NetEvents:Broadcast('RemoveDismemberment', tostring(player.id))
     end
 end)
-
 
 function DoesEnoughDamageToDismember(damage, bone, maxHealth)
     local chance = 0

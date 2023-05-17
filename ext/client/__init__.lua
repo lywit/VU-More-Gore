@@ -4,6 +4,7 @@ require '__shared/config'
 local DismemberedPlayers = {}
 local DismemberedPlayerBones = {}
 local DismemberedPlayerBonesSquirtChance = {}
+local DismemberedPlayerBonesSquirtSize = {}
 local bloodEffect = nil
 local bloodSquirtUpdateCount = 0
 
@@ -20,9 +21,10 @@ NetEvents:Subscribe('DismembermentEvent', function(data)
 			end
 		end
 
-		table.insert(DismemberedPlayers, data[1])
+		table.insert(DismemberedPlayers, PlayerManager:GetPlayerByName(data[1]).id)
 		table.insert(DismemberedPlayerBones, data[2])
 		table.insert(DismemberedPlayerBonesSquirtChance, 0.01)
+		table.insert(DismemberedPlayerBonesSquirtSize, MathUtils:GetRandom(0.75, 1.25))
 
 		if bloodEffect ~= nil and data[3] ~= nil and data[4] ~= nil and data[5] ~= nil then
 			local lTransform = LinearTransform()
@@ -31,6 +33,17 @@ NetEvents:Subscribe('DismembermentEvent', function(data)
 		end
 	end
 end)
+
+function RemoveDismemberedPlayer(player)
+	local i = indexOf(DismemberedPlayers, player)
+	while i ~= nil do
+		table.remove(DismemberedPlayers, i)
+		table.remove(DismemberedPlayerBones, i)
+		table.remove(DismemberedPlayerBonesSquirtChance, i)
+		table.remove(DismemberedPlayerBonesSquirtSize, i)
+		i = indexOf(DismemberedPlayers, player)
+	end
+end
 
 NetEvents:Subscribe('BloodEffectEvent', function(data)
 	data = split_with_comma(data)
@@ -42,9 +55,9 @@ NetEvents:Subscribe('BloodEffectEvent', function(data)
 end)
 
 NetEvents:Subscribe('RemoveDismemberment', function(data)
-	player = PlayerManager:GetPlayerByName(data)
+	player = PlayerManager:GetPlayerById(tonumber(data))
 	if player ~= nil then
-		RemoveDismemberedPlayer(player.name)
+		RemoveDismemberedPlayer(player.id)
 	end
 end)
 
@@ -58,6 +71,8 @@ end)
 Events:Subscribe('Level:Loaded', function(levelName, gameMode)
     DismemberedPlayers = {}
 	DismemberedPlayerBones = {}
+	DismemberedPlayerBonesSquirtChance = {}
+	DismemberedPlayerBonesSquirtSize = {}
 
 	bloodEffect = EffectBlueprint(ResourceManager:FindInstanceByGuid(Guid('06EE8223-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('245A136F-C690-A293-3806-7973D09D40DB')))
 	if bloodEffect == nil then
@@ -66,59 +81,69 @@ Events:Subscribe('Level:Loaded', function(levelName, gameMode)
 end)
 
 function UpdateDismemberment()
+	local updateBloodSquirts = false
+	if bloodSquirtUpdateCount > bloodSquirtSpawnInterval then
+		updateBloodSquirts = true
+		bloodSquirtUpdateCount = 0
+	end
+
 	for i, p in ipairs(DismemberedPlayers) do
-		local player = PlayerManager:GetPlayerByName(tostring(p))
+		local player = PlayerManager:GetPlayerById(p)
 		local dismembermentQuatTransform = nil
+		local worldQuatTransform = nil
+		local ragdoll = nil
 
 		if player and player ~= nil then
 			if player.alive == false then
 				if not player.corpse or player.corpse == nil then
 					RemoveDismemberedPlayer(DismemberedPlayers[i])
 				else
-					dismembermentQuatTransform = player.corpse.ragdollComponent:GetLocalTransform(tonumber(DismemberedPlayerBones[i]))
-					if dismembermentQuatTransform ~= nil then
-						dismembermentQuatTransform.transAndScale.w = 0.0
-						player.corpse.ragdollComponent:SetLocalTransform(tonumber(DismemberedPlayerBones[i]), dismembermentQuatTransform)
-						local worldQuatTransform = player.corpse.ragdollComponent:GetActiveWorldTransform(tonumber(DismemberedPlayerBones[i])):ToLinearTransform()
-						--local bloodEffectPosition = Vec3(worldQuatTransform.transAndScale.x, worldQuatTransform.transAndScale.y, worldQuatTransform.transAndScale.z)
-						if bloodSquirtUpdateCount > 5 and MathUtils:GetRandom(0, DismemberedPlayerBonesSquirtChance[i]) < 1 then
-							SpawnBloodEffect(worldQuatTransform, -98, false)
-							DismemberedPlayerBonesSquirtChance[i] = DismemberedPlayerBonesSquirtChance[i] * dismerbermentBloodSquirtDegredationFactor
-							bloodSquirtUpdateCount = 0
-						else
-							bloodSquirtUpdateCount = bloodSquirtUpdateCount + 1
+					ragdoll = player.corpse.ragdollComponent
+				end
+			elseif player.soldier then
+				ragdoll = player.soldier.ragdollComponent
+			end
+			if ragdoll ~= nil then
+				if updateBloodSquirts == true then
+					worldQuatTransform = ragdoll:GetActiveWorldTransform(DismemberedPlayerBones[i])
+					if worldQuatTransform ~= nil then
+						if player.alive == false and MathUtils:GetRandom(0, DismemberedPlayerBonesSquirtChance[i]) < 1 then
+							DismemberedPlayerBonesSquirtSize[i] = DismemberedPlayerBonesSquirtSize[i] * dismembermentBloodSquirtSizeReductionFactor
+							DismemberedPlayerBonesSquirtChance[i] = DismemberedPlayerBonesSquirtChance[i] * dismembermentBloodSquirtDegredationFactor
+							SpawnBloodEffect(worldQuatTransform:ToLinearTransform(), 0, false, DismemberedPlayerBonesSquirtSize[i])
+						elseif player.alive == true then
+							SpawnBloodEffect(worldQuatTransform:ToLinearTransform(), 0, false, DismemberedPlayerBonesSquirtSize[i])
 						end
 					end
 				end
-			elseif player.soldier then
-				dismembermentQuatTransform = player.soldier.ragdollComponent:GetLocalTransform(tonumber(DismemberedPlayerBones[i]))
+
+				dismembermentQuatTransform = ragdoll:GetLocalTransform(DismemberedPlayerBones[i])
 				if dismembermentQuatTransform ~= nil then
 					dismembermentQuatTransform.transAndScale.w = 0.0
-					player.soldier.ragdollComponent:SetLocalTransform(tonumber(DismemberedPlayerBones[i]), dismembermentQuatTransform)
-					local worldQuatTransform = player.soldier.ragdollComponent:GetActiveWorldTransform(tonumber(DismemberedPlayerBones[i])):ToLinearTransform()
-					--local bloodEffectPosition = Vec3(worldQuatTransform.transAndScale.x, worldQuatTransform.transAndScale.y, worldQuatTransform.transAndScale.z)
-					if bloodSquirtUpdateCount > 5 and MathUtils:GetRandom(0, 1) then
-						SpawnBloodEffect(worldQuatTransform, -98, false)
-						bloodSquirtUpdateCount = 0
-					else
-						bloodSquirtUpdateCount = bloodSquirtUpdateCount + 1
-					end
+					ragdoll:SetLocalTransform(DismemberedPlayerBones[i], dismembermentQuatTransform)
 				end
 			end
 		end
 	end
+	bloodSquirtUpdateCount = bloodSquirtUpdateCount + 1
 end
 
 function SpawnBloodEffect(position, damage, isHeadshot, sizeOverwrite)
 	if bloodEffect ~= nil and position ~= nil then
 		local effectPosition = LinearTransform()
 		local effectSize = 0
+
+		damage = tonumber(damage)
 		if isHeadshot then
 			damage = damage / 2.4
 		end
 
 		if sizeOverwrite == nil then
-			effectSize =  (1.0 + (damage / 100)) * MathUtils:GetRandom(0.75, 1.25)
+			if damage ~= nil then
+				effectSize =  (1.0 + (damage / 100)) * MathUtils:GetRandom(0.75, 1.25)
+			else
+				effectSize = 1
+			end
 		else
 			effectSize = sizeOverwrite
 		end
@@ -129,16 +154,6 @@ function SpawnBloodEffect(position, damage, isHeadshot, sizeOverwrite)
 		effectPosition.trans = position.trans
 
 		EffectManager:PlayEffect(bloodEffect, effectPosition, EffectParams(), false)
-	end
-end
-
-function RemoveDismemberedPlayer(player)
-	local i = indexOf(DismemberedPlayers, player)
-	while i ~= nil do
-		table.remove(DismemberedPlayers, i)
-		table.remove(DismemberedPlayerBones, i)
-		table.remove(DismemberedPlayerBonesSquirtChance, i)
-		i = indexOf(DismemberedPlayers, player)
 	end
 end
 
@@ -184,7 +199,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('F256E142-C9D8-4BFE-985B-3960B9
 
 	instance:MakeWritable()
 	instance.splashRayLength = 10
-	instance.poolRayLength = 2
+	instance.poolRayLength = 3
 end)
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/Decals/Blood/Decal_Blood_01.txt#L2
@@ -212,6 +227,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('611A7D99-A4F8-4602-BC40-A5D958
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/FX/Impacts/Soldier/Emitter_S/Em_Impact_Soldier_Body_Blood_01_S.txt#L8
@@ -222,6 +240,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/FX/Impacts/Soldier/Emitter_S/Em_Impact_Soldier_Body_Blood_01_S.txt#L199
@@ -246,6 +267,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('68D37A4B-1A02-4FBC-BB22-DEF26D
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('68D37A4B-1A02-4FBC-BB22-DEF26D6CF8A0'), Guid('B9E8F591-9394-4605-B0BC-7EA331556F51'), function(instance)
@@ -270,6 +294,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('91CFF1D3-46E0-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('91CFF1D3-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('0EE3D168-5B41-4BA0-A318-C30ED5CE06CD'), function(instance)
@@ -294,6 +321,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('F080EB5F-BC10-47FC-BD95-2499A5
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('F080EB5F-BC10-47FC-BD95-2499A52B5ACE'), Guid('BDABBD04-59E3-4552-9C97-5107C1DBCE3B'), function(instance)
@@ -318,6 +348,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9B1F187'), Guid('AF71CE59-9DA1-4F54-BA65-38FBDC92CAFC'), function(instance)
@@ -342,6 +375,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('04A6AAC6-46E7-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('04A6AAC6-46E7-11DE-9F79-8FE6EED9BBEA'), Guid('FE2E91E6-6F21-4352-A679-D3D005AD75C7'), function(instance)
@@ -366,6 +402,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('8096D617-FECC-478D-AAED-31949B
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('8096D617-FECC-478D-AAED-31949BFD790F'), Guid('CB66C431-2994-4124-8965-CB21E86063CE'), function(instance)
@@ -390,6 +429,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('0D39B5F6-46E7-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('0D39B5F6-46E7-11DE-9F79-8FE6EED9BBEA'), Guid('E13AD8D4-72A1-4413-824B-3060BF523609'), function(instance)
@@ -414,6 +456,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('DA1EF1C7-B797-41F5-8622-030362
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('DA1EF1C7-B797-41F5-8622-03036202F94C'), Guid('EFD0D486-B848-4B9C-9CEF-33D53C13AD17'), function(instance)
@@ -438,6 +483,9 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('FF3D43E3-CFBA-4D4A-B313-74194B
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
+	instance.forceFullRes = true
+	instance.forceNiceSorting = true
+	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('FF3D43E3-CFBA-4D4A-B313-74194B1AE894'), Guid('40F00F8A-3760-40B2-8617-BA84328C7AAF'), function(instance)
@@ -451,7 +499,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EE
 	instance = EffectEntityData(instance)
 
 	instance:MakeWritable()
-	instance.maxInstanceCount = 256
+	instance.maxInstanceCount = 1024
 end)
 
 
@@ -459,47 +507,47 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EE
 	instance = EmitterEntityData(instance)
 
 	instance:MakeWritable()
-	instance.maxInstanceCount = 256
+	instance.maxInstanceCount = 1024
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('F416BFA0-C90C-4627-A13C-F018C4787BDE'), function(instance)
 	instance = EmitterEntityData(instance)
 
 	instance:MakeWritable()
-	instance.maxInstanceCount = 256
+	instance.maxInstanceCount = 1024
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('07FC48D8-4796-4336-97E2-8AF38AF3DC2A'), function(instance)
 	instance = EmitterEntityData(instance)
 
 	instance:MakeWritable()
-	instance.maxInstanceCount = 256
+	instance.maxInstanceCount = 1024
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('0F37073C-1C2C-4898-8480-7E3FF77BE55E'), function(instance)
 	instance = EmitterEntityData(instance)
 
 	instance:MakeWritable()
-	instance.maxInstanceCount = 256
+	instance.maxInstanceCount = 1024
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('7C62FFDD-55DF-40FA-A975-D946C18F71E1'), function(instance)
 	instance = EmitterEntityData(instance)
 
 	instance:MakeWritable()
-	instance.maxInstanceCount = 256
+	instance.maxInstanceCount = 1024
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('D0EF8FB1-DD8C-4A9D-A77E-2C7854A4A5FE'), function(instance)
 	instance = EmitterEntityData(instance)
 
 	instance:MakeWritable()
-	instance.maxInstanceCount = 256
+	instance.maxInstanceCount = 1024
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('D0EF8FB1-DD8C-4A9D-A77E-2C7854A4A5FE'), function(instance)
 	instance = EmitterEntityData(instance)
 
 	instance:MakeWritable()
-	instance.maxInstanceCount = 256
+	instance.maxInstanceCount = 1024
 end)

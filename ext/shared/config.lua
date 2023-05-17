@@ -6,7 +6,7 @@ bloodPoolSizeMultiplier = 2.25 --Size of the blood pool effect on dead bodies
 bloodPoolSizeRandomness = 0.75 --The randomness that will be added to the blood pool effect's size
 
 --Blood Splattter
-maxBloodSplatterAmount = 128  --The maximum amount of blood effects that can be spawned
+maxBloodSplatterAmount = 1024  --The maximum amount of blood effects that can be spawned
 bloodSplatterLifetimeMultiplier = 1.25 --How long new blood splatters should be spawned
 bloodSplatterSpawnRateMultiplier = 1.25 --How fast new blood splatters should be spawned
 bloodSplatterSizeMultiplier = 1.0 --The spawn area size for blood splatters
@@ -24,7 +24,9 @@ legMultiplier = 1.75 --Note that leg hitboxes are difficult to hit (You have to 
 --Settings
 enableDismemberment = true --Set to false to disable dismembered
 dismemberArmsBeforeDeath = false --Arms can be dismembered before death, intended for zombie servers. Otherwise bots will hold floating guns.
-dismerbermentBloodSquirtDegredationFactor = 1.125 --How quickly the blood squirt frequency degrades. Higher values cause blood squirts to dissapear sooner.
+dismembermentBloodSquirtDegredationFactor = 1.25 --How quickly the blood squirt frequency degrades. Higher values cause blood squirts to dissapear sooner.
+dismembermentBloodSquirtSizeReductionFactor = 0.975 -- How quickly blood squirts reduce in size. Lower values make the size reduce faster.
+bloodSquirtSpawnInterval = 6 --Updater interval for spawning blood squirts. Lower values spawns squirts faster.
 
 --Vehicles
 enableVehicleModifications = true --enable or disable vehicle modifications
