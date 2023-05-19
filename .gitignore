@@ -1,0 +1,11 @@
+
+workspace.code-workspace
+VU-More-Gore.vua.code-workspace
+ext/shared/.vscode/settings.json
+ext/server/.vscode/settings.json
+ext/client/.vscode/settings.json
+.vu/intermediate/Shared/version.lua
+.vu/intermediate/Shared/Util/RotationHelper.lua
+.vu/intermediate/Shared/config.lua
+.vu/intermediate/Shared/__init__.lua
+.vu/intermediate/Server/__init__.lua

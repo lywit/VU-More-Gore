@@ -20,6 +20,8 @@ NetEvents:Subscribe('DismembermentEvent', function(data)
 				return
 			end
 		end
+		local p = PlayerManager:GetPlayerByName(data[1])
+		if p == nil then return end
 
 		table.insert(DismemberedPlayers, PlayerManager:GetPlayerByName(data[1]).id)
 		table.insert(DismemberedPlayerBones, data[2])
@@ -198,8 +200,8 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('F256E142-C9D8-4BFE-985B-3960B9
 	instance = SoldierDecalComponentData(instance)
 
 	instance:MakeWritable()
-	instance.splashRayLength = 10
-	instance.poolRayLength = 3
+	instance.splashRayLength = bulletBloodSplatterDistance
+	instance.poolRayLength = bloodPoolDistance
 end)
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/Decals/Blood/Decal_Blood_01.txt#L2
@@ -227,7 +229,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('611A7D99-A4F8-4602-BC40-A5D958
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -240,7 +241,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -267,7 +267,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('68D37A4B-1A02-4FBC-BB22-DEF26D
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -294,7 +293,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('91CFF1D3-46E0-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -321,7 +319,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('F080EB5F-BC10-47FC-BD95-2499A5
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -348,7 +345,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -375,7 +371,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('04A6AAC6-46E7-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -402,7 +397,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('8096D617-FECC-478D-AAED-31949B
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -429,7 +423,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('0D39B5F6-46E7-11DE-9F79-8FE6EE
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -456,7 +449,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('DA1EF1C7-B797-41F5-8622-030362
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)
@@ -483,7 +475,6 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('FF3D43E3-CFBA-4D4A-B313-74194B
 	instance:MakeWritable()
 	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceFullRes = true
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
 end)

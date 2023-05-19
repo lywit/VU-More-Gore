@@ -14,7 +14,7 @@ Hooks:Install('Soldier:Damage', 1, function(hook, soldier, info, giverInfo)
         if(((info.damage > soldier.health and DoesEnoughDamageToDismember(info.damage, boneIndex, soldier.maxHealth)) or ((boneIndex == 2 or boneIndex == 3) and DoesEnoughDamageToDismember(info.damage, boneIndex, soldier.maxHealth) and dismemberArmsBeforeDeath == true))) then
             NetEvents:Broadcast('DismembermentEvent', tostring(soldier.player.name) .. ',' .. boneIndex .. ',' .. info.position.x  .. ',' .. info.position.y .. ',' .. info.position.z .. ',' .. info.damage)
         elseif bloodOnEveryHit then
-            NetEvents:Broadcast('BloodEffectEvent', info.position.x  .. ',' .. info.position.y .. ',' .. info.position.z .. ',' .. info.damage .. ',' .. boneIndex)
+            NetEvents:BroadcastUnreliableLocal('BloodEffectEvent', info.position.x  .. ',' .. info.position.y .. ',' .. info.position.z .. ',' .. info.damage .. ',' .. boneIndex)
         end
     elseif (info.isExplosiveDamage == true or info.isDemolitionDamage) and info.damage > soldier.health then
         for i = 1, MathUtils:GetRandomInt(1, 3), 1 do

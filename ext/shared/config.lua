@@ -4,6 +4,7 @@ bloodOnEveryHit = true --Spawns networked blood effects on every bullet based on
 --Blood Pool
 bloodPoolSizeMultiplier = 2.25 --Size of the blood pool effect on dead bodies
 bloodPoolSizeRandomness = 0.75 --The randomness that will be added to the blood pool effect's size
+bloodPoolDistance = 3 --Distance where a blood pool can spawn underneath a body
 
 --Blood Splattter
 maxBloodSplatterAmount = 1024  --The maximum amount of blood effects that can be spawned
@@ -11,6 +12,7 @@ bloodSplatterLifetimeMultiplier = 1.25 --How long new blood splatters should be 
 bloodSplatterSpawnRateMultiplier = 1.25 --How fast new blood splatters should be spawned
 bloodSplatterSizeMultiplier = 1.0 --The spawn area size for blood splatters
 bloodSplatterEffectDistanceMultiplier = 1.25 --The distance where blood splatters will be rendered
+bulletBloodSplatterDistance = 10 --Raycast distance behind an enemy that gets hit to spawn a blood splatter
 
 --Corpses
 --Note that for Fun-Bots to be effected you need to set AdditionalBotSpawnDelay in the Config to the desired corpse time for bots. Otherwise their corpses will disappear in 0.5 seconds by Fun-Bots default.
