@@ -1,5 +1,7 @@
 require '__shared/config'
+require '__shared/Util/Functions'
 
+local RotationHelper = require '__shared/Util/RotationHelper'
 
 local DismemberedPlayers = {}
 local DismemberedPlayerBones = {}
@@ -11,27 +13,28 @@ local bloodSquirtUpdateCount = 0
 
 NetEvents:Subscribe('DismembermentEvent', function(data)
 	data = split_with_comma(data)
-	data[2] = ConvertDamageBoneToSkeletonBone(data[2])
-	if data[1] ~= nil and data[2] ~= nil then
-		--Check for duplicate dismembered bones
-		local playerIndex = indexOf(DismemberedPlayers, data[1])
+	local playerName = data[1]
+	local boneIndex = ConvertDamageBoneToSkeletonBone(data[2])
+	if playerName ~= nil and boneIndex ~= nil then
+		-- Check for duplicate dismembered bones
+		local playerIndex = indexOf(DismemberedPlayers, playerName)
 		if playerIndex ~= nil then
-			if data[2] == DismemberedPlayerBones[playerIndex] then
+			if boneIndex == DismemberedPlayerBones[playerIndex] then
 				return
 			end
 		end
-		local p = PlayerManager:GetPlayerByName(data[1])
-		if p == nil then return end
+		local player = PlayerManager:GetPlayerByName(playerName)
+		if player == nil then return end
 
-		table.insert(DismemberedPlayers, PlayerManager:GetPlayerByName(data[1]).id)
-		table.insert(DismemberedPlayerBones, data[2])
+		table.insert(DismemberedPlayers, player.id)
+		table.insert(DismemberedPlayerBones, boneIndex)
 		table.insert(DismemberedPlayerBonesSquirtChance, 0.01)
 		table.insert(DismemberedPlayerBonesSquirtSize, MathUtils:GetRandom(0.75, 1.25))
 
 		if bloodEffect ~= nil and data[3] ~= nil and data[4] ~= nil and data[5] ~= nil then
 			local lTransform = LinearTransform()
 			lTransform.trans = Vec3(tonumber(data[3]), tonumber(data[4]), tonumber(data[5]))
-			SpawnBloodEffect(lTransform, data[6], data[2] == 45)
+			SpawnBloodEffect(lTransform, data[6], boneIndex == 45)
 		end
 	end
 end)
@@ -48,11 +51,26 @@ function RemoveDismemberedPlayer(player)
 end
 
 NetEvents:Subscribe('BloodEffectEvent', function(data)
-	data = split_with_comma(data)
-	if bloodEffect ~= nil and data[1] ~= nil and data[2] ~= nil and data[3] ~= nil and data[4] ~= nil then
+	data = split_with(data, ',')
+	if bloodEffect ~= nil and #data >= 4 then
 		local lTransform = LinearTransform()
 		lTransform.trans = Vec3(tonumber(data[1]), tonumber(data[2]), tonumber(data[3]))
-		SpawnBloodEffect(lTransform, data[4], data[5] == 1)
+		if #data >= 8 then
+			local direction = RotationHelper:GetLTFromYPR(tonumber(data[6]), tonumber(data[7]), tonumber(data[8]))
+			lTransform = lTransform * direction
+		end
+
+		local damage = tonumber(data[4])
+		if tonumber(data[5]) == 1 then
+			damage = damage * damagePerEffectHeadshotFactor
+		end
+
+		if damage then
+			local bloodEffectAmount = MathUtils:Clamp(damage / damagePerBloodEffect, 1, maxBloodEffectsPerHit)
+			for i = 1, bloodEffectAmount, 1 do
+				SpawnBloodEffect(lTransform, damage)
+			end
+		end
 	end
 end)
 
@@ -83,46 +101,41 @@ Events:Subscribe('Level:Loaded', function(levelName, gameMode)
 end)
 
 function UpdateDismemberment()
-	local updateBloodSquirts = false
-	if bloodSquirtUpdateCount > bloodSquirtSpawnInterval then
-		updateBloodSquirts = true
+	local updateBloodSquirts = bloodSquirtUpdateCount > bloodSquirtSpawnInterval
+	if updateBloodSquirts then
 		bloodSquirtUpdateCount = 0
 	end
 
-	for i, p in ipairs(DismemberedPlayers) do
-		local player = PlayerManager:GetPlayerById(p)
-		local dismembermentQuatTransform = nil
-		local worldQuatTransform = nil
+	for i, playerId in ipairs(DismemberedPlayers) do
+		local player = PlayerManager:GetPlayerById(playerId)
 		local ragdoll = nil
 
-		if player and player ~= nil then
-			if player.alive == false then
-				if not player.corpse or player.corpse == nil then
-					RemoveDismemberedPlayer(DismemberedPlayers[i])
+		if player then
+			if not player.alive then
+				if not player.corpse then
+					RemoveDismemberedPlayer(playerId)
 				else
 					ragdoll = player.corpse.ragdollComponent
 				end
 			elseif player.soldier then
 				ragdoll = player.soldier.ragdollComponent
 			end
-			if ragdoll ~= nil then
-				if updateBloodSquirts == true then
-					worldQuatTransform = ragdoll:GetActiveWorldTransform(DismemberedPlayerBones[i])
-					if worldQuatTransform ~= nil then
-						if player.alive == false and MathUtils:GetRandom(0, DismemberedPlayerBonesSquirtChance[i]) < 1 then
-							DismemberedPlayerBonesSquirtSize[i] = DismemberedPlayerBonesSquirtSize[i] * dismembermentBloodSquirtSizeReductionFactor
-							DismemberedPlayerBonesSquirtChance[i] = DismemberedPlayerBonesSquirtChance[i] * dismembermentBloodSquirtDegredationFactor
-							SpawnBloodEffect(worldQuatTransform:ToLinearTransform(), 0, false, DismemberedPlayerBonesSquirtSize[i])
-						elseif player.alive == true then
-							SpawnBloodEffect(worldQuatTransform:ToLinearTransform(), 0, false, DismemberedPlayerBonesSquirtSize[i])
-						end
+
+			if ragdoll then
+				local boneIndex = DismemberedPlayerBones[i]
+				if updateBloodSquirts then
+					local worldQuatTransform = ragdoll:GetActiveWorldTransform(boneIndex)
+					if worldQuatTransform and (player.alive or MathUtils:GetRandom(0, DismemberedPlayerBonesSquirtChance[i]) < 1) then
+						DismemberedPlayerBonesSquirtSize[i] = DismemberedPlayerBonesSquirtSize[i] * dismembermentBloodSquirtSizeReductionFactor
+						DismemberedPlayerBonesSquirtChance[i] = DismemberedPlayerBonesSquirtChance[i] * dismembermentBloodSquirtDegredationFactor
+						SpawnBloodEffect(worldQuatTransform:ToLinearTransform(), 0, false, DismemberedPlayerBonesSquirtSize[i])
 					end
 				end
 
-				dismembermentQuatTransform = ragdoll:GetLocalTransform(DismemberedPlayerBones[i])
-				if dismembermentQuatTransform ~= nil then
+				local dismembermentQuatTransform = ragdoll:GetLocalTransform(boneIndex)
+				if dismembermentQuatTransform then
 					dismembermentQuatTransform.transAndScale.w = 0.0
-					ragdoll:SetLocalTransform(DismemberedPlayerBones[i], dismembermentQuatTransform)
+					ragdoll:SetLocalTransform(boneIndex, dismembermentQuatTransform)
 				end
 			end
 		end
@@ -131,23 +144,12 @@ function UpdateDismemberment()
 end
 
 function SpawnBloodEffect(position, damage, isHeadshot, sizeOverwrite)
-	if bloodEffect ~= nil and position ~= nil then
+	if bloodEffect and position then
 		local effectPosition = LinearTransform()
-		local effectSize = 0
+		local effectSize = sizeOverwrite or ((1.0 + (damage / 100)) * MathUtils:GetRandom(0.75, 1.25))
 
-		damage = tonumber(damage)
 		if isHeadshot then
 			damage = damage / 2.4
-		end
-
-		if sizeOverwrite == nil then
-			if damage ~= nil then
-				effectSize =  (1.0 + (damage / 100)) * MathUtils:GetRandom(0.75, 1.25)
-			else
-				effectSize = 1
-			end
-		else
-			effectSize = sizeOverwrite
 		end
 
 		effectPosition.left = Vec3(effectSize, position.left.y, position.left.z)
@@ -157,34 +159,6 @@ function SpawnBloodEffect(position, damage, isHeadshot, sizeOverwrite)
 
 		EffectManager:PlayEffect(bloodEffect, effectPosition, EffectParams(), false)
 	end
-end
-
-function ConvertDamageBoneToSkeletonBone(bone)
-	bone = tonumber(bone)
-	if bone == 0 then
-		return nil
-	elseif bone == 1 then -- head
-		return 45
-	elseif bone == 2 then --right arm
-		return 121
-	elseif bone == 3 then --left arm
-		return 9
-	elseif bone == 4 then --right leg
-		return 198
-	elseif bone == 5 then --left leg
-		return 183
-	else
-		return nil
-	end
-end
-
-function indexOf(array, value)
-    for i, v in ipairs(array) do
-        if v == value then
-            return i
-        end
-    end
-    return nil
 end
 
 function split_with_comma(str)
