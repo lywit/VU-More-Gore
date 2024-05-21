@@ -9,3 +9,4 @@ ext/client/.vscode/settings.json
 .vu/intermediate/Shared/config.lua
 .vu/intermediate/Shared/__init__.lua
 .vu/intermediate/Server/__init__.lua
+VU-More-Gore.code-workspace
