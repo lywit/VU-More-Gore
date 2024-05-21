@@ -3,6 +3,8 @@ require '__shared/Util/Functions'
 
 local RotationHelper = require '__shared/Util/RotationHelper'
 
+local DismemberedSoldierIDs = {}
+local DismemberedSoldiers = {}
 local DismemberedPlayers = {}
 local DismemberedPlayerBones = {}
 local DismemberedPlayerBonesSquirtChance = {}
@@ -26,7 +28,20 @@ NetEvents:Subscribe('DismembermentEvent', function(data)
 		local player = PlayerManager:GetPlayerByName(playerName)
 		if player == nil then return end
 
-		table.insert(DismemberedPlayers, player.id)
+		if not player.alive then
+			if player.corpse then
+				table.insert(DismemberedSoldiers, player.corpse)
+				table.insert(DismemberedSoldierIDs, player.corpse.bus.networkId)
+			end
+		elseif player.soldier then
+			table.insert(DismemberedSoldiers, player.soldier)
+			table.insert(DismemberedSoldierIDs, player.soldier.bus.networkId)
+		else
+			return
+		end
+
+		
+		table.insert(DismemberedPlayers, #DismemberedPlayers + 1)
 		table.insert(DismemberedPlayerBones, boneIndex)
 		table.insert(DismemberedPlayerBonesSquirtChance, 0.01)
 		table.insert(DismemberedPlayerBonesSquirtSize, MathUtils:GetRandom(0.75, 1.25))
@@ -39,16 +54,22 @@ NetEvents:Subscribe('DismembermentEvent', function(data)
 	end
 end)
 
-function RemoveDismemberedPlayer(player)
-	local i = indexOf(DismemberedPlayers, player)
+function RemoveDismemberedPlayer(id)
+	local i = indexOf(DismemberedSoldierIDs, id)
 	while i ~= nil do
+		table.remove(DismemberedSoldierIDs, i)
+		table.remove(DismemberedSoldiers, i)
 		table.remove(DismemberedPlayers, i)
 		table.remove(DismemberedPlayerBones, i)
 		table.remove(DismemberedPlayerBonesSquirtChance, i)
 		table.remove(DismemberedPlayerBonesSquirtSize, i)
-		i = indexOf(DismemberedPlayers, player)
+		i = indexOf(DismemberedSoldierIDs, id)
 	end
 end
+
+NetEvents:Subscribe('RemoveDismemberment', function(data)
+	RemoveDismemberedPlayer(data)
+end)
 
 NetEvents:Subscribe('BloodEffectEvent', function(data)
 	data = split_with(data, ',')
@@ -74,13 +95,6 @@ NetEvents:Subscribe('BloodEffectEvent', function(data)
 	end
 end)
 
-NetEvents:Subscribe('RemoveDismemberment', function(data)
-	player = PlayerManager:GetPlayerById(tonumber(data))
-	if player ~= nil then
-		RemoveDismemberedPlayer(player.id)
-	end
-end)
-
 --Thank you for the optimization tip IllustrisJack ;)
 Events:Subscribe('UpdateManager:Update', function(deltaTime, updatePass)
     if updatePass == 0 then
@@ -89,6 +103,8 @@ Events:Subscribe('UpdateManager:Update', function(deltaTime, updatePass)
 end)
 
 Events:Subscribe('Level:Loaded', function(levelName, gameMode)
+	DismemberedSoldierIDs = {}
+	DismemberedSoldiers = {}
     DismemberedPlayers = {}
 	DismemberedPlayerBones = {}
 	DismemberedPlayerBonesSquirtChance = {}
@@ -106,26 +122,26 @@ function UpdateDismemberment()
 		bloodSquirtUpdateCount = 0
 	end
 
-	for i, playerId in ipairs(DismemberedPlayers) do
-		local player = PlayerManager:GetPlayerById(playerId)
+	for i in ipairs(DismemberedPlayers) do
+		local player = DismemberedSoldiers[i]
 		local ragdoll = nil
 
-		if player then
-			if not player.alive then
-				if not player.corpse then
-					RemoveDismemberedPlayer(playerId)
-				else
-					ragdoll = player.corpse.ragdollComponent
-				end
-			elseif player.soldier then
-				ragdoll = player.soldier.ragdollComponent
+		local function checkRagdollComponent()
+			return player.ragdollComponent ~= nil
+		end
+		
+		local success, result = pcall(checkRagdollComponent)
+		
+		if success and result then
+			if player.ragdollComponent ~= nil then
+				ragdoll = player.ragdollComponent
 			end
 
 			if ragdoll then
 				local boneIndex = DismemberedPlayerBones[i]
 				if updateBloodSquirts then
 					local worldQuatTransform = ragdoll:GetActiveWorldTransform(boneIndex)
-					if worldQuatTransform and (player.alive or MathUtils:GetRandom(0, DismemberedPlayerBonesSquirtChance[i]) < 1) then
+					if worldQuatTransform and (MathUtils:GetRandom(0, DismemberedPlayerBonesSquirtChance[i]) < 1) then
 						DismemberedPlayerBonesSquirtSize[i] = DismemberedPlayerBonesSquirtSize[i] * dismembermentBloodSquirtSizeReductionFactor
 						DismemberedPlayerBonesSquirtChance[i] = DismemberedPlayerBonesSquirtChance[i] * dismembermentBloodSquirtDegredationFactor
 						SpawnBloodEffect(worldQuatTransform:ToLinearTransform(), 0, false, DismemberedPlayerBonesSquirtSize[i])
@@ -138,6 +154,8 @@ function UpdateDismemberment()
 					ragdoll:SetLocalTransform(boneIndex, dismembermentQuatTransform)
 				end
 			end
+		else
+			RemoveDismemberedPlayer(DismemberedSoldierIDs[i])
 		end
 	end
 	bloodSquirtUpdateCount = bloodSquirtUpdateCount + 1
@@ -174,8 +192,8 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('F256E142-C9D8-4BFE-985B-3960B9
 	instance = SoldierDecalComponentData(instance)
 
 	instance:MakeWritable()
-	instance.splashRayLength = bulletBloodSplatterDistance
-	instance.poolRayLength = bloodPoolDistance
+	instance.splashRayLength = splashRayLength
+	instance.poolRayLength = bloodPoolRayLength
 end)
 
 --https://github.com/EmulatorNexus/Venice-EBX/blob/f06c290fa43c80e07985eda65ba74c59f4c01aa0/Decals/Blood/Decal_Blood_01.txt#L2
@@ -201,7 +219,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('611A7D99-A4F8-4602-BC40-A5D958
 	instance = EmitterTemplateData(instance)
 
 	instance:MakeWritable()
-	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
+	instance.lifetime = instance.lifetime * 0.75
 	instance.maxCount = maxBloodSplatterAmount
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
@@ -213,7 +231,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9
 
 	instance:MakeWritable()
 	instance:MakeWritable()
-	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
+	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier -- good
 	instance.maxCount = maxBloodSplatterAmount
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
@@ -239,7 +257,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('68D37A4B-1A02-4FBC-BB22-DEF26D
 	instance = EmitterTemplateData(instance)
 
 	instance:MakeWritable()
-	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
+	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier --good
 	instance.maxCount = maxBloodSplatterAmount
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
@@ -265,7 +283,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('91CFF1D3-46E0-11DE-9F79-8FE6EE
 	instance = EmitterTemplateData(instance)
 
 	instance:MakeWritable()
-	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
+	instance.lifetime = instance.lifetime
 	instance.maxCount = maxBloodSplatterAmount
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
@@ -284,24 +302,63 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('F080EB5F-BC10-47FC-BD95-2499A5
 	instance = SpawnSizeData(instance)
 
 	instance:MakeWritable()
-	instance.size = instance.size * bloodSplatterSizeMultiplier
+	instance.size = 0 --bad
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('F080EB5F-BC10-47FC-BD95-2499A52B5ACE'), Guid('B4CB355D-1A6D-4BA5-9AEA-19933ED3ED61'), function(instance)
 	instance = EmitterTemplateData(instance)
 
 	instance:MakeWritable()
-	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
+	instance.lifetime = 0 --bad
 	instance.maxCount = maxBloodSplatterAmount
-	instance.forceNiceSorting = true
-	instance.transparencySunShadowEnable = true
 end)
 
 ResourceManager:RegisterInstanceLoadHandler(Guid('F080EB5F-BC10-47FC-BD95-2499A52B5ACE'), Guid('BDABBD04-59E3-4552-9C97-5107C1DBCE3B'), function(instance)
 	instance = SpawnRateData(instance)
 
 	instance:MakeWritable()
-	instance.spawnRate = instance.spawnRate * bloodSplatterSpawnRateMultiplier
+	instance.spawnRate = 0
+end)
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--https://github.com/VeniceUnleashed/Venice-EBX/blob/1b48533a42f9fce794b52b72e9e8bd33541e6b35/FX/Impacts/Soldier/Emitter_S/Em_Impact_Soldier_Body_SmokeGray_02_S.txt
+ResourceManager:RegisterInstanceLoadHandler(Guid('0017B8CD-4C74-495D-A386-32E52AA85E13'), Guid('F561FE61-B918-4540-999C-0B8B1EF81A16'), function(instance)
+	instance = SpawnSizeData(instance)
+
+	instance:MakeWritable()
+	instance.size = 0 --bad
+end)
+
+ResourceManager:RegisterInstanceLoadHandler(Guid('0017B8CD-4C74-495D-A386-32E52AA85E13'), Guid('D7A12A41-FDAD-4D08-8175-0215CE4E9D19'), function(instance)
+	instance = EmitterTemplateData(instance)
+
+	instance:MakeWritable()
+	instance.lifetime = 0 --bad
+	instance.maxCount = maxBloodSplatterAmount
+end)
+
+ResourceManager:RegisterInstanceLoadHandler(Guid('0017B8CD-4C74-495D-A386-32E52AA85E13'), Guid('D2F82378-64E3-4AB4-A79A-A3EAE9863F84'), function(instance)
+	instance = SpawnRateData(instance)
+
+	instance:MakeWritable()
+	instance.spawnRate = instance.spawnRate * 0
+end)
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--https://github.com/VeniceUnleashed/Venice-EBX/blob/1b48533a42f9fce794b52b72e9e8bd33541e6b35/FX/Impacts/Soldier/Emitter_S/Em_Impact_Soldier_Head_SmokeGray_02_S.txt
+ResourceManager:RegisterInstanceLoadHandler(Guid('0E38330C-77DF-4FCD-A420-587B1E1CF2AA'), Guid('DCA33DB9-4E3D-4BF4-B30B-455B157EF1A6'), function(instance)
+	instance = SpawnSizeData(instance)
+
+	instance:MakeWritable()
+	instance.size = 0 --bad
+end)
+
+ResourceManager:RegisterInstanceLoadHandler(Guid('0E38330C-77DF-4FCD-A420-587B1E1CF2AA'), Guid('D3EC73EF-25B7-4326-8B86-845620212332'), function(instance)
+	instance = EmitterTemplateData(instance)
+
+	instance:MakeWritable()
+	instance.lifetime = 0 --bad
+	instance.maxCount = maxBloodSplatterAmount
 end)
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -317,7 +374,7 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('CF10F423-478C-47CC-9BFB-8E16B9
 	instance = EmitterTemplateData(instance)
 
 	instance:MakeWritable()
-	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier
+	instance.lifetime = instance.lifetime * bloodSplatterLifetimeMultiplier --good
 	instance.maxCount = maxBloodSplatterAmount
 	instance.forceNiceSorting = true
 	instance.transparencySunShadowEnable = true
@@ -515,4 +572,12 @@ ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EE
 
 	instance:MakeWritable()
 	instance.maxInstanceCount = 1024
+end)
+
+ResourceManager:RegisterInstanceLoadHandler(Guid('06EE8223-46E0-11DE-9F79-8FE6EED9BBEA'), Guid('D5B66D3A-EA54-9EF1-8D79-C508CDA6F8FA'), function(instance)
+	instance = EffectEntityData(instance)
+
+	instance:MakeWritable()
+	instance.maxInstanceCount = 4096
+	print("Set max blood instances to: " .. instance.maxInstanceCount)
 end)

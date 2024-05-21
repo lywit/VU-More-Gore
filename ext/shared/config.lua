@@ -14,9 +14,9 @@ bloodPoolRayLength = 3
 --Blood Splattter
 maxBloodSplatterAmount = 4096  --The maximum amount of blood effects that can be spawned
 bloodSplatterLifetimeMultiplier = 1.15 --How long new blood splatters should be spawned
-bloodSplatterSpawnRateMultiplier = 1.25 --How fast new blood splatters should be spawned
-bloodSplatterSizeMultiplier = 0.75 --The spawn area size for blood splatters
-bloodSplatterEffectDistanceMultiplier = 1.25 --The distance where blood splatters will be rendered
+bloodSplatterSpawnRateMultiplier = 1.15 --How fast new blood splatters should be spawned
+bloodSplatterSizeMultiplier = 0.7 --The spawn area size for blood splatters
+bloodSplatterEffectDistanceMultiplier = 1 --The distance where blood splatters will be rendered
 
 --Corpses
 --Note that for Fun-Bots to be effected you need to set AdditionalBotSpawnDelay in the Config to the desired corpse time for bots. Otherwise their corpses will disappear in 0.5 seconds by Fun-Bots default.

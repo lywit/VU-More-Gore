@@ -57,17 +57,43 @@ Hooks:Install('BulletEntity:Collision', 1, function(hook, entity, hit, giverInfo
     end
 end)
 
-
-local function broadcastRemoveDismemberment(player)
-    if player then
-        NetEvents:Broadcast('RemoveDismemberment', tostring(player.id))
+Events:Subscribe('Soldier:HealthAction', function(soldier, action)
+    if action == HealthStateAction.OnRevive then
+        NetEvents:Broadcast('RemoveDismemberment', soldier.bus.networkId)
     end
-end
+end)
 
-Events:Subscribe('Player:Respawn', broadcastRemoveDismemberment)
-Events:Subscribe('Player:ReviveAccepted', broadcastRemoveDismemberment)
-Events:Subscribe('Player:Left', broadcastRemoveDismemberment)
+Events:Subscribe('Player:Respawn', function(player)
+    if player.soldier then
+        NetEvents:Broadcast('RemoveDismemberment', player.soldier.bus.networkId)
+    end
+end)
 
+Events:Subscribe('Player:SpawnOnPlayer', function(player, playerToSpawnOn)
+    if player.soldier then
+        NetEvents:Broadcast('RemoveDismemberment', player.soldier.bus.networkId)
+    end
+end)
+
+Events:Subscribe('Player:ReviveAccepted', function(player, reviver)
+    if player.soldier then
+        NetEvents:Broadcast('RemoveDismemberment', player.soldier.bus.networkId)
+    end
+end)
+
+Events:Subscribe('Player:Left', function(player)
+    if player.soldier then
+        NetEvents:Broadcast('RemoveDismemberment', player.soldier.bus.networkId)
+    end
+end)
+
+-- In case of same networkId as a soldier who may not exist but is in the dismembered players
+Events:Subscribe('Player:Joining', function(name, playerGuid, ipAddress, accountGuid)
+    player = PlayerManager:GetPlayerByGuid(playerGuid)
+    if player and player.soldier then
+        NetEvents:Broadcast('RemoveDismemberment', player.soldier.bus.networkId)
+    end
+end)
 
 function DoesEnoughDamageToDismember(damage, bone, maxHealth)
 
